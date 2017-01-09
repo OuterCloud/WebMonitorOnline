@@ -2,6 +2,7 @@
 from flask import render_template,request,jsonify
 from app import app
 import requests,os,subprocess,time,webbrowser,platform
+from bs4 import BeautifulSoup
 
 @app.route("/",methods=["GET","POST"])
 @app.route("/index",methods=["GET","POST"])
@@ -61,28 +62,26 @@ def startTest():
 @app.route("/result",methods=["POST"])
 def result():
 	if request.method == "POST":
-		curr_platform = platform.platform()
 		result_file_path = request.form.get("result_file_path")
-		if curr_platform.startswith("Windows"):
-			#webbrowser.open(result_file_path)
-			os.startfile(result_file_path)
-		else:
-			subprocess.call(["open", result_file_path])
-	return "OK"
-
-@app.route("/edit",methods=["POST"])
-def edit():
-	if request.method == "POST":
 		script_path = request.form.get("script_path")
-		curr_platform = platform.platform()
-		if curr_platform.startswith("Windows"):
-			os.startfile(script_path)
-		elif curr_platform.startswith("Darwin"):
-			subprocess.call(["open", script_path])
+		return_result = []
+		return_dic = {}
+		with open(result_file_path) as result:
+			soup = BeautifulSoup(result.read(),"html.parser")
+			trs = soup.find_all("tr")
+			for tr in trs:
+				tds = tr.find_all("td")
+				for td in tds:
+					if script_path in td.string:
+						for td in tr:
+							return_result.append(td.text)
+		if ("failed" or "xception") in return_result[len(return_result)-1]:
+			return_result.append("failed")
 		else:
-			subprocess.call(["xdg-open", script_path])
-	return "OK"
-	
+			return_result.append("passed")
+		return_dic["result"] = return_result
+		return jsonify(return_dic)
+
 #Util Methods.
 def check_if_python(fileName):
 	if fileName.endswith('.py'):
