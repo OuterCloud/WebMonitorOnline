@@ -1,0 +1,298 @@
+{% extends 'base.html' %}
+{% block content %}
+<script type="text/javascript">
+window.onload=function() {
+	geneList();
+}
+/**
+全选备用方案1：
+function checkAll(){
+	var checkAllButton= document.getElementById("checkAll");
+	if (checkAllButton.getAttribute("aria-pressed") == "true") {
+		$("tbody input[type='checkbox']").each(function(){
+			this.checked=false;
+		})
+	}else{
+		$("tbody input[type='checkbox']").each(function(){
+			this.checked=true;
+		})
+	}
+}**/
+function selectAll() {
+	$("#select_all").attr("style","display:none");
+	$("#unselect_all").attr("style","display:block");
+	$("tbody input[type='checkbox']").each(function(){
+		this.checked=true;
+	})
+}
+function unselectAll() {
+	$("#unselect_all").attr("style","display:none");
+	$("#select_all").attr("style","display:block");
+	$("tbody input[type='checkbox']").each(function(){
+		this.checked=false;
+	})
+}
+function geneList() {
+	$.get("/geneList",function(data,value){
+		for (var i=0;i<data["script_paths"].length;i++)
+		{
+			var script_path = data["script_paths"][i];
+			script_name = script_path.split("\\")[script_path.split("\\").length-1];
+			document.getElementById("tbody").innerHTML += "<tr id='item'>\
+				<td id='checkbox_"+i+"'><input type='checkbox'></td>\
+				<td id='script_path_"+i+"'>"+script_path+"</td>\
+				<td><a id='edit_"+i+"' href='javascript:void' scriptPath='"+script_path+"' onclick='edit(event)'>编辑</a></td>\
+				<td>尚未检测</td>\
+				<td style='text-align: center;'>"+i+"</td>\
+			</tr>";
+		}
+	});
+}
+function geneSelection() {
+	var selection = []
+	$("tbody input[type='checkbox']").each(function(){
+		if( this.checked == true ){
+			var script_path = this.parentNode.nextSibling.nextSibling.innerHTML;
+			selection.push(script_path);
+		}
+	})
+	return selection;
+}
+function startTest() {
+	var selection = geneSelection();
+	if (selection != "") {
+		document.getElementById("start_check").innerHTML = "检测中……";
+		var params = {};
+		params["selection"] = selection;
+		$.post("/startTest",params,function(data,value){
+			document.getElementById("start_check").innerHTML = "检测";
+			$("tbody input[type='checkbox']").each(function(){
+				if( this.checked == true ){
+					this.parentNode.nextSibling.nextSibling.nextSibling.nextSibling.nextSibling.nextSibling.innerHTML = "<a id='check_result' href='javascript:void(0);' resultPath='"+data+"' onclick='result(event)'>查看结果</a>";
+				}
+			})
+		});
+	}else{
+		$("#myModal").modal("toggle");
+	}
+}
+function result(evt) {
+	params = {};
+	var obj = window.event?event.srcElement:evt.target;
+	//alert(obj.getAttribute("resultPath"))
+	params["result_file_path"] = obj.getAttribute("resultPath");
+	$.post("/result",params,function(data,value){
+		return true;
+	});
+}
+function edit(evt) {
+	params = {};
+	var obj = window.event?event.srcElement:evt.target;
+	params["script_path"] = obj.getAttribute("scriptPath");
+	$.post("/edit",params,function(data,value){
+		return true;
+	});
+}
+function search() {
+	var key = $("#searchKey").val();
+	if (key) {
+		$("td").css("background-color","transparent");
+		$("td:contains("+key+")").css("background-color","#B2E0FF");
+		var results = $("td:contains("+key+")");
+		var last = results[results.length-1];
+		//alert(last.id);
+		scrollToId(last.id);
+	}
+}
+function searchAndCheck() {
+	var key = $("#searchKey").val();
+	if (key) {
+		$("td").css("background-color","transparent");
+		$("td:contains("+key+")").css("background-color","#B2E0FF");
+		var results = $("td:contains("+key+")");
+		for (var i=0;i<results.length;i++)
+		{
+			results[i].previousSibling.previousSibling.firstChild.checked=true;
+		}
+		var last = results[results.length-1];
+		//alert(last.id);
+		scrollToId(last.id);
+	}
+}
+function scrollToId(id) {
+	//800是滑动动画持续时间
+	$("html,body").animate({scrollTop:$("#" + id).offset().top}, 800);  
+}
+function inputMonitor(evt) {
+	if ($("#searchKey").val()) {
+		$("#searchButton1").removeAttr("disabled");
+		$("#searchButton2").removeAttr("disabled");
+	}else{
+		$("#searchButton1").attr("disabled","disabled");
+		$("#searchButton2").attr("disabled","disabled");
+	}
+}
+function help() {
+	//Js调起模态框
+	$("#helpModal").modal("toggle");
+}
+function grumbleTip(obj) {
+	var id = "#" + obj.id;
+	var tip;
+	if (id == "#img1") {
+		tip = "点击图片前往查看WebMonitor文档";
+	} else if (id == "#img2") {
+		tip = "点击图片前往查看Auty文档";
+	}
+	$(id).grumble({
+		text: tip, 
+		angle: 37,
+		type: "alt-", 
+		distance: 100, 
+		showAfter: 500,
+		hideAfter: 1000
+	});
+}
+</script>
+<!--导航栏-->
+<nav style="margin:0px;padding:0px;" class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+	<div class="container-fluid">
+		<div class="navbar-header">
+			<a class="navbar-brand" href="">接口检测平台</a>
+		</div>
+		<div>
+			<ul class="nav navbar-nav">
+				<li><a href="">更新脚本列表</a></li>
+				<li><a id="start_check" href="javascript:void(0);" onclick="startTest()">检测</a></li>
+				<li class="dropdown">
+					<a href="#" class="dropdown-toggle" data-toggle="dropdown">
+						Auty <b class="caret"></b>
+					</a>
+					<ul class="dropdown-menu">
+						<li><a target="_blank" href="https://github.com/OuterCloud/Auty.git">Auty下载</a></li>
+						<li><a target="_blank" href="http://www.cnblogs.com/LanTianYou/category/888691.html">Auty系列文档</a></li>
+					</ul>
+				</li>
+				<li><a href="javascript:void(0);" onclick="help()">帮助</a></li>
+			</ul>
+		</div>
+	</div>
+</nav>
+<!--展示区-->
+<div id="carousel-example-generic" class="carousel slide text-center" data-ride="carousel">
+	<!-- Indicators -->
+	<ol class="carousel-indicators">
+		<li data-target="#carousel-example-generic" data-slide-to="0" class="active"></li>
+		<li data-target="#carousel-example-generic" data-slide-to="1"></li>
+		<li data-target="#carousel-example-generic" data-slide-to="2"></li>
+	</ol>
+	<!-- Wrapper for slides -->
+	<div class="carousel-inner" role="listbox">
+		<div class="item active">
+			<img id="img1" width="50%" onmouseover="grumbleTip(this)" style="cursor:pointer" onclick="window.open('http://www.cnblogs.com/LanTianYou/p/6250926.html')" class="center-block" src="{{ url_for('static', filename = 'pictures/project.png') }}" alt="天外归云"/>
+			<div class="carousel-caption">
+				1.下载WebMonitor到本地
+			</div>
+		</div>
+		<div class="item">
+			<img id="img2" width="50%" onmouseover="grumbleTip(this)" style="cursor:pointer" onclick="window.open('http://www.cnblogs.com/LanTianYou/p/5952472.html')" class="center-block" src="{{ url_for('static', filename = 'pictures/Auty.png') }}" alt="天外归云"/>
+			<div class="carousel-caption">
+				2.下载Auty到WebMonitor
+			</div>
+		</div>
+		<div class="item">
+			<img id="img3" width="50%" class="center-block" src="{{ url_for('static', filename = 'pictures/code.png') }}" alt="天外归云"/>
+			<div class="carousel-caption">
+				3.接口检测用例编写样式
+			</div>
+		</div>
+	</div>
+	<!-- Controls -->
+	<a class="left carousel-control" href="#carousel-example-generic" role="button" data-slide="prev">
+		<span style="background-color:transparent;" class="glyphicon glyphicon-chevron-left"></span>
+		<span class="sr-only">Previous</span>
+	</a>
+	<a class="right carousel-control" href="#carousel-example-generic" role="button" data-slide="next">
+		<span class="glyphicon glyphicon-chevron-right"></span>
+		<span class="sr-only">Next</span>
+	</a>
+</div>
+<!--搜索框-->
+<div class="input-group col-md-3" style="positon:relative;width:30%;margin:30 auto;">  
+	<input type="text" id="searchKey" oninput="inputMonitor(event)" class="form-control search-query"placeholder="请输入脚本路径关键字" / >  
+	<span class="input-group-btn">  
+		<button id="searchButton1" class="btn btn-info btn-search" disabled="disabled" onclick="search()">搜索</button>
+		<button id="searchButton2" class="btn btn-info btn-search" disabled="disabled" onclick="searchAndCheck()">搜索并勾选</button>  
+	</span>  
+</div>
+<!--脚本列表-->
+<table class="table table-hover">
+	<thead>
+		<tr>
+			<th width="5%">
+				<!--
+				全选备用方案1：
+				<button id="checkAll" type="button" class="btn btn-primary" data-toggle="button" onclick="checkAll()">全选</button>
+				-->
+				<a id="select_all" style="display: block;" href="javascript:void(0);" onclick="selectAll()">
+					<span class="glyphicon glyphicon-ok"></span>
+				</a>
+				<a id="unselect_all" style="display: none;" href="javascript:void(0);" onclick="unselectAll()">
+					<span class="glyphicon glyphicon-remove"></span>
+				</a>
+			</th>
+			<th width="70%">脚本路径</th>
+			<th width="10%">编辑脚本</th>
+			<th width="10%">检测结果</th>
+			<th width="10%" style="text-align: center;">索引</th>
+		</tr>
+	</thead>
+	<tbody id="tbody">
+	</tbody>
+</table>
+<!-- 模态框（Modal） -->
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+					&times;
+				</button>
+				<h4 class="modal-title" id="myModalLabel">
+					对不起
+				</h4>
+			</div>
+			<div class="modal-body">
+				请先选择要检测的脚本！
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">关闭
+				</button>
+			</div>
+		</div><!-- /.modal-content -->
+	</div><!-- /.modal -->
+</div>
+<div class="modal fade" id="helpModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+					&times;
+				</button>
+				<h4 class="modal-title" id="myModalLabel">
+					准备工作
+				</h4>
+			</div>
+			<div class="modal-body">
+				1.下载<a href="https://github.com/OuterCloud/WebMonitor.git" target="_blank">WebMonitor</a>到本地；<br>
+				2.下载<a href="https://github.com/OuterCloud/Auty.git" target="_blank">Auty</a>到WebMonitor本地根目录下；<br>
+				3.在Auty的scripts/scripts路径下添加检测脚本。
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">关闭
+				</button>
+			</div>
+		</div><!-- /.modal-content -->
+	</div><!-- /.modal -->
+</div>
+{% endblock%}
