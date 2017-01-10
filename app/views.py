@@ -9,7 +9,6 @@ from bs4 import BeautifulSoup
 def index():
 	if request.method == "GET":
 		return render_template("/index.html")
-
 @app.route("/geneList",methods=["GET","POST"])
 def geneList():
 	if request.method == "GET":
@@ -24,7 +23,6 @@ def geneList():
 		result = {}
 		result["script_paths"] = selection
 		return jsonify(result)
-
 @app.route("/startTest",methods=["POST"])
 def startTest():
 	if request.method == "POST":
@@ -58,7 +56,6 @@ def startTest():
 		if result_file_path != "":
 			return result_file_path
 		#Analyse the result html.
-
 @app.route("/result",methods=["POST"])
 def result():
 	if request.method == "POST":
@@ -81,21 +78,17 @@ def result():
 			return_result.append("passed")
 		return_dic["result"] = return_result
 		return jsonify(return_dic)
-
 #Util Methods.
 def check_if_python(fileName):
 	if fileName.endswith('.py'):
 		return True
-
 def check_if_html(fileName):
 	if fileName.endswith(".html"):
 		return True
-
 def gene_selection(root_path,selection):
 	with open(os.path.join(root_path,"Auty","scripts","selections","selection.txt"),"w") as content:
 		for sele in selection:
 			content.write(sele+"\n")
-
 def getDirSize(dir_path):
 	size = 0
 	for root, dirs, files in os.walk(dir_path):

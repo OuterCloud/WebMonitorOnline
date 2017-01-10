@@ -69,10 +69,10 @@ function startTest() {
 			$("tbody input[type='checkbox']").each(function(){
 				if( this.checked == true ){
 					var scriptPath = this.parentNode.nextSibling.nextSibling.innerHTML;
-					this.parentNode.nextSibling.nextSibling.nextSibling.nextSibling.innerHTML = "<a id='check_result' href='javascript:void(0);' resultPath='"+data+"' scriptPath='"+scriptPath+"' onclick='result(event)'>查看结果</a>";
+					this.parentNode.nextSibling.nextSibling.nextSibling.nextSibling.innerHTML = "<a desc='check_result' href='javascript:void(0);' resultPath='"+data+"' scriptPath='"+scriptPath+"' onclick='result(event)'>查看</a>";
 					analyseResult();
 				}
-			})
+			});
 		});
 	}else{
 		$("#myModal").modal("toggle");
@@ -96,16 +96,23 @@ function result(evt) {
 }
 function analyseResult() {
 	var params = {};
-	$("#check_result").each(function(){
-		params["result_file_path"] = $(this).attr("resultPath");
-		params["script_path"] = $(this).attr("scriptPath");
-		var result="none";
+	var thisNode;
+	$("[desc]").each(function(){
+		thisNode = $(this)
+		params["result_file_path"] = thisNode.attr("resultPath");
+		params["script_path"] = thisNode.attr("scriptPath");
+		//alert($(this).parent().next("td").html());
 		$.post("/result",params,function(data,value){
-			//待完成，将data["result"][6]（已经可以成功返回）显示在页面检测结果栏
-			result = data["result"][6];
-			
+			if (data["result"][6] == "passed") {
+				
+				thisNode.parent().next("td").css("color","green");
+			}
+			else{
+				thisNode.parent().next("td").css("color","red");
+			}
+			thisNode.parent().next("td").html(data["result"][6]);
 		});
-	})
+	});
 }
 function search() {
 	var key = $("#searchKey").val();
