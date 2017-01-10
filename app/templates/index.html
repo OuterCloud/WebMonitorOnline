@@ -70,9 +70,9 @@ function startTest() {
 				if( this.checked == true ){
 					var scriptPath = this.parentNode.nextSibling.nextSibling.innerHTML;
 					this.parentNode.nextSibling.nextSibling.nextSibling.nextSibling.innerHTML = "<a desc='check_result' href='javascript:void(0);' resultPath='"+data+"' scriptPath='"+scriptPath+"' onclick='result(event)'>查看</a>";
-					analyseResult();
 				}
 			});
+			analyseResult();
 		});
 	}else{
 		$("#myModal").modal("toggle");
@@ -96,21 +96,23 @@ function result(evt) {
 }
 function analyseResult() {
 	var params = {};
-	var thisNode;
-	$("[desc]").each(function(){
-		thisNode = $(this)
-		params["result_file_path"] = thisNode.attr("resultPath");
-		params["script_path"] = thisNode.attr("scriptPath");
-		//alert($(this).parent().next("td").html());
-		$.post("/result",params,function(data,value){
-			if (data["result"][6] == "passed") {
-				
-				thisNode.parent().next("td").css("color","green");
+	var scriptPaths = ""
+	$("td[id^='script_path']").each(function(){
+		scriptPaths = scriptPaths + $(this).text() + "<";
+	});
+	var scriptPaths = scriptPaths.substring(0,scriptPaths.length-1); 
+	params["script_paths"] = scriptPaths;
+	$.post("/resultAnalyse",params,function(data,value){
+		$("td[id^='script_path']").each(function(){
+			check_result = data["result"][$(this).text()];
+			if (check_result == "passed") {
+				$(this).next("td").next("td").css("color","green");
+				$(this).next("td").next("td").html(check_result);
 			}
-			else{
-				thisNode.parent().next("td").css("color","red");
+			else if (check_result == "failed") {
+				$(this).next("td").next("td").css("color","red");
+				$(this).next("td").next("td").html(check_result);
 			}
-			thisNode.parent().next("td").html(data["result"][6]);
 		});
 	});
 }

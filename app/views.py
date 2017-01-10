@@ -55,7 +55,6 @@ def startTest():
 						result_file_path = filePath
 		if result_file_path != "":
 			return result_file_path
-		#Analyse the result html.
 @app.route("/result",methods=["POST"])
 def result():
 	if request.method == "POST":
@@ -65,24 +64,74 @@ def result():
 		return_dic = {}
 		with open(result_file_path) as result:
 			result_content = result.read()
+			#判断html文件结尾再往下
 			while "</html>" not in result_content:
 				time.sleep(1)
 			soup = BeautifulSoup(result_content,"html.parser")
-			#判断html文件结尾再往下
 			trs = soup.find_all("tr")
 			for tr in trs:
 				tds = tr.find_all("td")
-				for td in tds:
-					if script_path in td.string:
-						for td in tr:
-							return_result.append(td.text)
-		if ("failed" or "xception" or "Traceback") in return_result[len(return_result)-1]:
+				if script_path in tds[0].text:
+					for td in tr:
+						return_result.append(td.text)
+		final_result = return_result[len(return_result)-1]
+		if ("failed" in final_result) or ("TraceBack" in final_result) or ("None" in final_result) or ("xception" in final_result) or ("rror" in final_result):
 			return_result.append("failed")
 		else:
 			return_result.append("passed")
 		return_dic["result"] = return_result
 		return jsonify(return_dic)
+@app.route("/resultAnalyse",methods=["POST"])
+def resultAnalyse():
+	#前台传过来的字符串，按“<”切割获得scriptPath
+	scriptPaths = request.form.get("script_paths")
+	scriptPaths = scriptPaths.split("<")
+	root_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+	results_folder_path = os.path.join(root_path,"Auty","results")
+	latestResultFilePath = getLatestResultFile(results_folder_path)
+	return_result = {}
+	with open(latestResultFilePath) as result:
+		result_content = result.read()
+		soup = BeautifulSoup(result_content,"html.parser")
+		trs = soup.find_all("tr")
+		for script_path in scriptPaths:
+			pass_or_fail = "none"
+			for tr in trs:
+				tds = tr.find_all("td")
+				if tds[0].text == script_path:
+					final_result = (tds[5].text).encode("utf-8")
+					if ("failed" in final_result) or ("Traceback" in final_result) or ("rror" in final_result):
+						pass_or_fail = "failed"
+					else:
+						pass_or_fail = "passed"
+			return_result[script_path] = pass_or_fail
+	return_dic = {}
+	return_dic["result"] = return_result
+	return jsonify(return_dic)
+
 #Util Methods.
+def getLatestResultFile(results_folder_path):
+	f_list = getHtmlsUnderFolder(results_folder_path)
+	f_list.sort(compare)
+	latestResultFilePath = f_list[-1]
+	return latestResultFilePath
+def getHtmlsUnderFolder(dirPath):
+	f_list = []
+	for i in os.walk(dirPath):
+		for fileName in i[2:3][0]:
+			if fileName.endswith(".html"):
+				path = os.path.join(dirPath,fileName)
+				f_list.append(path)
+	return f_list
+def compare(x, y):
+	stat_x = os.stat(x)
+	stat_y = os.stat(y)
+	if stat_x.st_ctime < stat_y.st_ctime:
+		return -1
+	elif stat_x.st_ctime > stat_y.st_ctime:
+		return 1
+	else:
+		return 0
 def check_if_python(fileName):
 	if fileName.endswith('.py'):
 		return True
