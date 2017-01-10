@@ -64,7 +64,11 @@ def result():
 		return_result = []
 		return_dic = {}
 		with open(result_file_path) as result:
-			soup = BeautifulSoup(result.read(),"html.parser")
+			result_content = result.read()
+			while "</html>" not in result_content:
+				time.sleep(1)
+			soup = BeautifulSoup(result_content,"html.parser")
+			#判断html文件结尾再往下
 			trs = soup.find_all("tr")
 			for tr in trs:
 				tds = tr.find_all("td")
@@ -72,7 +76,7 @@ def result():
 					if script_path in td.string:
 						for td in tr:
 							return_result.append(td.text)
-		if ("failed" or "xception") in return_result[len(return_result)-1]:
+		if ("failed" or "xception" or "Traceback") in return_result[len(return_result)-1]:
 			return_result.append("failed")
 		else:
 			return_result.append("passed")
