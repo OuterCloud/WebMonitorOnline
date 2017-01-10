@@ -108,7 +108,6 @@ def resultAnalyse():
 	return_dic = {}
 	return_dic["result"] = return_result
 	return jsonify(return_dic)
-
 #Util Methods.
 def getLatestResultFile(results_folder_path):
 	f_list = getHtmlsUnderFolder(results_folder_path)
