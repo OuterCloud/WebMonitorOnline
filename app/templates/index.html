@@ -61,7 +61,8 @@ function geneSelection() {
 function startTest() {
 	var selection = geneSelection();
 	if (selection != "") {
-		document.getElementById("start_check").innerHTML = "检测中……";
+		$("#waitModal").modal("toggle");
+		$("#start_check").hide();
 		var params = {};
 		params["selection"] = selection;
 		$.post("/startTest",params,function(data,value){
@@ -73,6 +74,8 @@ function startTest() {
 				}
 			});
 			analyseResult();
+			$("#start_check").show();
+			$("#waitModal").modal("hide");
 		});
 	}else{
 		$("#myModal").modal("toggle");
@@ -213,6 +216,7 @@ function inputMonitor(evt) {
 	</tbody>
 </table>
 <!-- 模态框（Modal） -->
+<!-- 提示选择脚本（Modal） -->
 <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
 	<div class="modal-dialog">
 		<div class="modal-content">
@@ -234,6 +238,7 @@ function inputMonitor(evt) {
 		</div><!-- /.modal-content -->
 	</div><!-- /.modal -->
 </div>
+<!-- 显示检测结果（Modal） -->
 <div class="modal fade" id="resultModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
 	<div class="modal-dialog">
 		<div class="modal-content">
@@ -282,6 +287,24 @@ function inputMonitor(evt) {
 			<div class="modal-footer">
 				<button type="button" class="btn btn-default" data-dismiss="modal">关闭
 				</button>
+			</div>
+		</div><!-- /.modal-content -->
+	</div><!-- /.modal -->
+</div>
+<!-- 模态框（Modal） -->
+<div class="modal fade" id="waitModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h4 class="modal-title" id="myModalLabel">
+					请稍等
+				</h4>
+			</div>
+			<div class="modal-body" style="text-align: center;">
+				检测中……
+			</div>
+			<div class="modal-footer">
+				检测结束自动关闭
 			</div>
 		</div><!-- /.modal-content -->
 	</div><!-- /.modal -->
