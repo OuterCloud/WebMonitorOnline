@@ -105,6 +105,9 @@ function analyseResult() {
 	});
 	var scriptPaths = scriptPaths.substring(0,scriptPaths.length-1); 
 	params["script_paths"] = scriptPaths;
+	analyse(params);
+}
+function analyse(params) {
 	$.post("/resultAnalyse",params,function(data,value){
 		$("td[id^='script_path']").each(function(){
 			check_result = data["result"][$(this).text()];
@@ -115,6 +118,11 @@ function analyseResult() {
 			else if (check_result == "failed") {
 				$(this).next("td").next("td").css("color","red");
 				$(this).next("td").next("td").html(check_result);
+			}
+		});
+		$("[desc='check_result']").each(function(){
+			if ($(this).parent().next().html() == "尚未检测") {
+				analyse(params);
 			}
 		});
 	});
