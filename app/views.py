@@ -4,11 +4,20 @@ from app import app
 import requests,os,subprocess,time,webbrowser,platform
 from bs4 import BeautifulSoup
 
+@app.errorhandler(404)
+def page_not_found(e):
+	return render_template("404.html"),404
+
+@app.errorhandler(500)
+def page_not_found(e):
+	return render_template("500.html"),500
+
 @app.route("/",methods=["GET","POST"])
 @app.route("/index",methods=["GET","POST"])
 def index():
 	if request.method == "GET":
 		return render_template("/index.html")
+
 @app.route("/geneList",methods=["GET","POST"])
 def geneList():
 	if request.method == "GET":
@@ -23,6 +32,7 @@ def geneList():
 		result = {}
 		result["script_paths"] = selection
 		return jsonify(result)
+
 @app.route("/startTest",methods=["POST"])
 def startTest():
 	if request.method == "POST":
@@ -55,6 +65,7 @@ def startTest():
 						result_file_path = filePath
 		if result_file_path != "":
 			return result_file_path
+
 @app.route("/result",methods=["POST"])
 def result():
 	if request.method == "POST":
@@ -81,6 +92,7 @@ def result():
 			return_result.append("passed")
 		return_dic["result"] = return_result
 		return jsonify(return_dic)
+
 @app.route("/resultAnalyse",methods=["POST"])
 def resultAnalyse():
 	#前台传过来的字符串，按“<”切割获得scriptPath
@@ -108,12 +120,14 @@ def resultAnalyse():
 	return_dic = {}
 	return_dic["result"] = return_result
 	return jsonify(return_dic)
+
 #Util Methods.
 def getLatestResultFile(results_folder_path):
 	f_list = getHtmlsUnderFolder(results_folder_path)
 	f_list.sort(compare)
 	latestResultFilePath = f_list[-1]
 	return latestResultFilePath
+
 def getHtmlsUnderFolder(dirPath):
 	f_list = []
 	for i in os.walk(dirPath):
@@ -122,6 +136,7 @@ def getHtmlsUnderFolder(dirPath):
 				path = os.path.join(dirPath,fileName)
 				f_list.append(path)
 	return f_list
+
 def compare(x, y):
 	stat_x = os.stat(x)
 	stat_y = os.stat(y)
@@ -131,16 +146,20 @@ def compare(x, y):
 		return 1
 	else:
 		return 0
+
 def check_if_python(fileName):
 	if fileName.endswith('.py'):
 		return True
+
 def check_if_html(fileName):
 	if fileName.endswith(".html"):
 		return True
+
 def gene_selection(root_path,selection):
 	with open(os.path.join(root_path,"Auty","scripts","selections","selection.txt"),"w") as content:
 		for sele in selection:
 			content.write(sele+"\n")
+
 def getDirSize(dir_path):
 	size = 0
 	for root, dirs, files in os.walk(dir_path):
